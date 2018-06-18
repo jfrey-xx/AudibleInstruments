@@ -8,6 +8,7 @@ extern Plugin *plugin;
 
 extern Model *modelBraids;
 extern Model *modelElements;
+extern Model *modelElements2;
 extern Model *modelTides;
 extern Model *modelClouds;
 extern Model *modelWarps;
