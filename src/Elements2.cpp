@@ -166,13 +166,14 @@ void Elements2::step() {
 		// Set patch from parameters
 		elements::Patch* p = part->mutable_patch();
 
-#define BIND(_p, _m, _i) clamp(params[_p].value + 3.3f*quadraticBipolar(params[_m].value)*inputs[_i].value/5.0f, 0.0f, 0.9995f)
-#define BIND2(_p, _m, _i) clamp(params[_p].value + params[_m].value*inputs[_i].value/10.0f, 0.0f, 0.9995f)
+		// In this version we take into consideration an input for contour / bow / blow / strike
+#define BINDSIMPLE(_p, _i) clamp(params[_p].value + inputs[_i].value/10.0f, 0.0f, 0.9995f)
+		p->exciter_envelope_shape = BINDSIMPLE(CONTOUR_PARAM, CONTOUR_MOD_INPUT);
+		p->exciter_bow_level = BINDSIMPLE(BOW_PARAM, BOW_MOD_INPUT);
+		p->exciter_blow_level = BINDSIMPLE(BLOW_PARAM, BLOW_MOD_INPUT);
+		p->exciter_strike_level = BINDSIMPLE(STRIKE_PARAM, STRIKE_MOD_INPUT);
 
-		p->exciter_envelope_shape = BIND2(CONTOUR_PARAM, CONTOUR_MOD_PARAM, CONTOUR_MOD_INPUT); //
-		p->exciter_bow_level = BIND2(BOW_PARAM, BOW_MOD_PARAM, BOW_MOD_INPUT); //
-		p->exciter_blow_level = BIND2(BLOW_PARAM, BLOW_MOD_PARAM, BLOW_MOD_INPUT); //
-		p->exciter_strike_level = BIND2(STRIKE_PARAM, STRIKE_MOD_PARAM, STRIKE_MOD_INPUT); //
+#define BIND(_p, _m, _i) clamp(params[_p].value + 3.3f*quadraticBipolar(params[_m].value)*inputs[_i].value/5.0f, 0.0f, 0.9995f)
 
 		p->exciter_bow_timbre = BIND(BOW_TIMBRE_PARAM, BOW_TIMBRE_MOD_PARAM, BOW_TIMBRE_MOD_INPUT);
 		p->exciter_blow_meta = BIND(FLOW_PARAM, FLOW_MOD_PARAM, FLOW_MOD_INPUT);
@@ -240,7 +241,7 @@ struct ElementsModalItem2 : MenuItem {
 
 struct ElementsWidget2 : ModuleWidget {
 	ElementsWidget2(Elements2 *module) : ModuleWidget(module) {
-		setPanel(SVG::load(assetPlugin(plugin, "res/Elements.svg")));
+		setPanel(SVG::load(assetPlugin(plugin, "res/Elements2.svg")));
 
 		addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
 		addChild(Widget::create<ScrewSilver>(Vec(480, 0)));
@@ -267,13 +268,9 @@ struct ElementsWidget2 : ModuleWidget {
 		addParam(ParamWidget::create<Rogan1PSWhite>(Vec(380, 202), module, Elements2::POSITION_PARAM, 0.0, 1.0, 0.5));
 		addParam(ParamWidget::create<Rogan1PSWhite>(Vec(451, 202), module, Elements2::SPACE_PARAM, 0.0, 2.0, 0.0));
 
-		addParam(ParamWidget::create<Trimpot>(Vec(80.5, 253), module, Elements2::CONTOUR_MOD_PARAM, -1.0, 1.0, 0.0)); //
 		addParam(ParamWidget::create<Trimpot>(Vec(104.5, 273), module, Elements2::BOW_TIMBRE_MOD_PARAM, -1.0, 1.0, 0.0));
-		addParam(ParamWidget::create<Trimpot>(Vec(124.5, 253), module, Elements2::BOW_MOD_PARAM, -1.0, 1.0, 0.0)); //
 		addParam(ParamWidget::create<Trimpot>(Vec(142.5, 273), module, Elements2::FLOW_MOD_PARAM, -1.0, 1.0, 0.0));
-		addParam(ParamWidget::create<Trimpot>(Vec(162.5, 253), module, Elements2::BLOW_MOD_PARAM, -1.0, 1.0, 0.0)); //
 		addParam(ParamWidget::create<Trimpot>(Vec(181.5, 273), module, Elements2::BLOW_TIMBRE_MOD_PARAM, -1.0, 1.0, 0.0));
-		addParam(ParamWidget::create<Trimpot>(Vec(200.5, 253), module, Elements2::STRIKE_MOD_PARAM, -1.0, 1.0, 0.0)); //
 		addParam(ParamWidget::create<Trimpot>(Vec(219.5, 273), module, Elements2::MALLET_MOD_PARAM, -1.0, 1.0, 0.0));
 		addParam(ParamWidget::create<Trimpot>(Vec(257.5, 273), module, Elements2::STRIKE_TIMBRE_MOD_PARAM, -1.0, 1.0, 0.0));
 		addParam(ParamWidget::create<Trimpot>(Vec(315.5, 273), module, Elements2::DAMPING_MOD_PARAM, -1.0, 1.0, 0.0));
@@ -294,14 +291,14 @@ struct ElementsWidget2 : ModuleWidget {
 		addOutput(Port::create<PJ301MPort>(Vec(20, 316), Port::OUTPUT, module, Elements2::AUX_OUTPUT));
 		addOutput(Port::create<PJ301MPort>(Vec(55, 316), Port::OUTPUT, module, Elements2::MAIN_OUTPUT));
 
-		addInput(Port::create<PJ301MPort>(Vec(80, 300), Port::INPUT, module, Elements2::CONTOUR_MOD_INPUT)); //
 		addInput(Port::create<PJ301MPort>(Vec(101, 316), Port::INPUT, module, Elements2::BOW_TIMBRE_MOD_INPUT));
-		addInput(Port::create<PJ301MPort>(Vec(121, 300), Port::INPUT, module, Elements2::BOW_MOD_INPUT)); //
+		addInput(Port::create<PJ301MPort>(Vec(120, 295), Port::INPUT, module, Elements2::CONTOUR_MOD_INPUT)); // extra input
 		addInput(Port::create<PJ301MPort>(Vec(139, 316), Port::INPUT, module, Elements2::FLOW_MOD_INPUT));
-		addInput(Port::create<PJ301MPort>(Vec(160, 300), Port::INPUT, module, Elements2::BLOW_MOD_INPUT)); //
+		addInput(Port::create<PJ301MPort>(Vec(158, 295), Port::INPUT, module, Elements2::BOW_MOD_INPUT)); // extra input
 		addInput(Port::create<PJ301MPort>(Vec(178, 316), Port::INPUT, module, Elements2::BLOW_TIMBRE_MOD_INPUT));
-		addInput(Port::create<PJ301MPort>(Vec(190, 300), Port::INPUT, module, Elements2::STRIKE_MOD_INPUT)); //
+		addInput(Port::create<PJ301MPort>(Vec(197, 295), Port::INPUT, module, Elements2::BLOW_MOD_INPUT)); // extra input
 		addInput(Port::create<PJ301MPort>(Vec(216, 316), Port::INPUT, module, Elements2::MALLET_MOD_INPUT));
+		addInput(Port::create<PJ301MPort>(Vec(235, 295), Port::INPUT, module, Elements2::STRIKE_MOD_INPUT)); // extra input
 		addInput(Port::create<PJ301MPort>(Vec(254, 316), Port::INPUT, module, Elements2::STRIKE_TIMBRE_MOD_INPUT));
 		addInput(Port::create<PJ301MPort>(Vec(312, 316), Port::INPUT, module, Elements2::DAMPING_MOD_INPUT));
 		addInput(Port::create<PJ301MPort>(Vec(350, 316), Port::INPUT, module, Elements2::GEOMETRY_MOD_INPUT));
