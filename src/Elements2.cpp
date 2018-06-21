@@ -173,7 +173,9 @@ void Elements2::step() {
 		p->exciter_blow_level = BINDSIMPLE(BLOW_PARAM, BLOW_MOD_INPUT);
 		p->exciter_strike_level = BINDSIMPLE(STRIKE_PARAM, STRIKE_MOD_INPUT);
 
-#define BIND(_p, _m, _i) clamp(params[_p].value + 3.3f*quadraticBipolar(params[_m].value)*inputs[_i].value/5.0f, 0.0f, 0.9995f)
+		// quadraticBipolar poorly suited to control with midi IMHO
+		// #define BIND(_p, _m, _i) clamp(params[_p].value + 3.3f*quadraticBipolar(params[_m].value)*inputs[_i].value/5.0f, 0.0f, 0.9995f)
+#define BIND(_p, _m, _i) clamp(params[_p].value + params[_m].value*inputs[_i].value/10.0f, 0.0f, 0.9995f)
 
 		p->exciter_bow_timbre = BIND(BOW_TIMBRE_PARAM, BOW_TIMBRE_MOD_PARAM, BOW_TIMBRE_MOD_INPUT);
 		p->exciter_blow_meta = BIND(FLOW_PARAM, FLOW_MOD_PARAM, FLOW_MOD_INPUT);
@@ -191,7 +193,9 @@ void Elements2::step() {
 		performance.note = 12.0*inputs[NOTE_INPUT].value + roundf(params[COARSE_PARAM].value) + params[FINE_PARAM].value + 69.0;
 		performance.modulation = 3.3*quarticBipolar(params[FM_PARAM].value) * 49.5 * inputs[FM_INPUT].value/5.0;
 		performance.gate = params[PLAY_PARAM].value >= 1.0 || inputs[GATE_INPUT].value >= 1.0;
-		performance.strength = clamp(1.0 - inputs[STRENGTH_INPUT].value/5.0f, 0.0f, 1.0f);
+		// fix inversion of strenth??
+		//performance.strength = clamp(1.0 - inputs[STRENGTH_INPUT].value/5.0f, 0.0f, 1.0f);
+		performance.strength = clamp(inputs[STRENGTH_INPUT].value/10.0f, 0.0f, 1.0f);
 
 		// Generate audio
 		part->Process(performance, blow, strike, main, aux, 16);
